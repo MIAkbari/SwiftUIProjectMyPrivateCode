@@ -7,13 +7,77 @@
 
 import SwiftUI
 
+struct PercentageEnviremnetKey: EnvironmentKey {
+    static var defaultValue: CGFloat = 0.0
+}
+
+extension EnvironmentValues {
+    var progress: CGFloat {
+        get { self[PercentageEnviremnetKey.self] }
+        set { self[PercentageEnviremnetKey.self] = newValue }
+    }
+}
+
+struct ProgressButtonStyle: ButtonStyle {
+    
+    @Environment(\.progress) var fillPercentage
+    
+    func makeBody(configuration: Configuration) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(.teal.opacity(0.3))
+                    
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(.teal)
+                    .frame(width: geo.size.width * fillPercentage)
+            }
+            .animation(.easeInOut(duration: 7), value: fillPercentage)
+        }
+        .overlay {
+            configuration.label
+                .font(.body.weight(.heavy))
+                .foregroundStyle(.white)
+        }
+    }
+}
+//
+//extension View {
+//    func progress(_ percentage: CGFloat) -> some View {
+//    }
+//}
+
 struct ContentView: View {
+    
+    @State var progress: CGFloat = 0.0
+    @State var textState: String = "Start Donwload"
+    
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            Text("Button Downloader wit Animations")
+                .padding(.bottom, 30)
+            
+            Button(textState) {
+                progress = progress == 0.0 ? 1.0 : 0.0
+                textState = "Donloading..."
+            }
+            .buttonStyle(ProgressButtonStyle())
+            .frame(height: 40)
+            .padding(.horizontal, 20)
+            .environment(\.progress, progress)
+            .onChange(of: progress) { _, _ in
+//                let task = Task.sleep(for: .seconds(7))
+//                Task {
+//                    MainActor.run {
+//                        self.textState = "Finished"
+//                    }
+//                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 7) {
+                    textState = "Finished"
+                }
+            }
+            
+            Spacer()
         }
         .padding()
     }
