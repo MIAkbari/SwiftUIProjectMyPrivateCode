@@ -21,6 +21,7 @@ extension EnvironmentValues {
 struct ProgressButtonStyle: ButtonStyle {
     
     @Environment(\.progress) var fillPercentage
+    let color: [Color] = [.teal, .orange, .red, .green]
     
     func makeBody(configuration: Configuration) -> some View {
         GeometryReader { geo in
@@ -29,7 +30,7 @@ struct ProgressButtonStyle: ButtonStyle {
                     .fill(.teal.opacity(0.3))
                     
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(.teal)
+                    .fill(color.randomElement()!)
                     .frame(width: geo.size.width * fillPercentage)
             }
             .animation(.easeInOut(duration: 7), value: fillPercentage)
@@ -41,11 +42,13 @@ struct ProgressButtonStyle: ButtonStyle {
         }
     }
 }
-//
-//extension View {
-//    func progress(_ percentage: CGFloat) -> some View {
-//    }
-//}
+
+extension View {
+    func progress(_ percentage: CGFloat) -> some View {
+        environment(\.progress, percentage)
+
+    }
+}
 
 struct ContentView: View {
     
@@ -56,24 +59,23 @@ struct ContentView: View {
         VStack {
             Text("Button Downloader wit Animations")
                 .padding(.bottom, 30)
+                .transition(.slide)
             
             Button(textState) {
-                progress = progress == 0.0 ? 1.0 : 0.0
+                progress = 1.0
                 textState = "Donloading..."
             }
             .buttonStyle(ProgressButtonStyle())
             .frame(height: 40)
             .padding(.horizontal, 20)
-            .environment(\.progress, progress)
+            .progress(progress)
             .onChange(of: progress) { _, _ in
-//                let task = Task.sleep(for: .seconds(7))
-//                Task {
-//                    MainActor.run {
-//                        self.textState = "Finished"
-//                    }
-//                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 7) {
-                    textState = "Finished"
+                Task {
+                    try? await Task.sleep(for: .seconds(7))
+                    
+                    await MainActor.run {
+                        textState = "Finished"
+                    }
                 }
             }
             
